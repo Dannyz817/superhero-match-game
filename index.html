@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Superhero Match Table</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #ffffff, #f1f1f1, #dcdcdc);
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: #fafafa;
+      border: 1px solid #d8d8d8;
+      border-radius: 18px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+      padding: 28px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      text-align: center;
+      color: #222;
+      font-size: 2rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin: 0 0 24px;
+    }
+
+    .message {
+      min-height: 48px;
+      margin-bottom: 18px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      text-align: center;
+      background: #eeeeee;
+      border: 1px solid #d0d0d0;
+      color: #555;
+      font-weight: bold;
+    }
+
+    .message.success {
+      background: #ffffff;
+      border: 2px solid #777;
+      color: #111;
+    }
+
+    .table-section {
+      margin-top: 24px;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      color: #444;
+      font-size: 1.1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    th,
+    td {
+      padding: 14px;
+      border: 1px solid #dddddd;
+      text-align: left;
+    }
+
+    th {
+      background: #e6e6e6;
+      color: #222;
+    }
+
+    td {
+      background: #fbfbfb;
+    }
+
+    tr:nth-child(even) td {
+      background: #f2f2f2;
+    }
+
+    .matched td {
+      background: #dff5df;
+      font-weight: bold;
+    }
+
+    .refresh-note {
+      margin-top: 18px;
+      text-align: center;
+      color: #777;
+      font-size: 0.95rem;
+    }
+
+    button {
+      display: block;
+      margin: 22px auto 0;
+      padding: 12px 22px;
+      border: none;
+      border-radius: 999px;
+      background: #333;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background: #555;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Superhero Match Game</h1>
+    <p class="subtitle">Refresh the page until all heroes match their real names and actors.</p>
+
+    <div id="message" class="message">
+      Not all heroes match yet. Refresh and try again!
+    </div>
+
+    <section class="table-section">
+      <h2 class="section-title">Example of a correct match</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Hero Name</th>
+            <th>Real Name</th>
+            <th>Actor Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Spider-Man</td>
+            <td>Peter Parker</td>
+            <td>Tom Holland</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="table-section">
+      <h2 class="section-title">Dynamic table</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Hero Name</th>
+            <th>Real Name</th>
+            <th>Actor Name</th>
+          </tr>
+        </thead>
+        <tbody id="heroTableBody"></tbody>
+      </table>
+    </section>
+
+    <button onclick="window.location.reload()">Refresh Table</button>
+    <p class="refresh-note">The table changes automatically every time the page is refreshed.</p>
+  </main>
+
+  <script>
+    const heroes = [
+      {
+        heroName: "Iron Man",
+        realName: "Tony Stark",
+        actorName: "Robert Downey Jr."
+      },
+      {
+        heroName: "Captain America",
+        realName: "Steve Rogers",
+        actorName: "Chris Evans"
+      },
+      {
+        heroName: "Black Panther",
+        realName: "T'Challa",
+        actorName: "Chadwick Boseman"
+      },
+      {
+        heroName: "Thor",
+        realName: "Thor Odinson",
+        actorName: "Chris Hemsworth"
+      },
+      {
+        heroName: "Wonder Woman",
+        realName: "Diana Prince",
+        actorName: "Gal Gadot"
+      }
+    ];
+
+    function shuffleArray(array) {
+      const shuffled = [...array];
+
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const randomIndex = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]];
+      }
+
+      return shuffled;
+    }
+
+    function hasVisitedBefore() {
+      return localStorage.getItem("hasVisitedHeroMatchGame") === "true";
+    }
+
+    function markAsVisited() {
+      localStorage.setItem("hasVisitedHeroMatchGame", "true");
+    }
+
+    function allRowsMatch(heroNames, realNames, actorNames) {
+      return heroNames.every((heroName, index) => {
+        const correctHero = heroes.find(hero => hero.heroName === heroName);
+
+        return (
+          correctHero.realName === realNames[index] &&
+          correctHero.actorName === actorNames[index]
+        );
+      });
+    }
+
+    function createRandomTableData() {
+      let heroNames;
+      let realNames;
+      let actorNames;
+
+      do {
+        heroNames = shuffleArray(heroes.map(hero => hero.heroName));
+        realNames = shuffleArray(heroes.map(hero => hero.realName));
+        actorNames = shuffleArray(heroes.map(hero => hero.actorName));
+      } while (!hasVisitedBefore() && allRowsMatch(heroNames, realNames, actorNames));
+
+      return { heroNames, realNames, actorNames };
+    }
+
+    const tableBody = document.getElementById("heroTableBody");
+    const message = document.getElementById("message");
+    const firstVisit = !hasVisitedBefore();
+    const { heroNames, realNames, actorNames } = createRandomTableData();
+
+    let correctMatches = 0;
+
+    for (let i = 0; i < heroes.length; i++) {
+      const row = document.createElement("tr");
+
+      const heroCell = document.createElement("td");
+      const realNameCell = document.createElement("td");
+      const actorNameCell = document.createElement("td");
+
+      heroCell.textContent = heroNames[i];
+      realNameCell.textContent = realNames[i];
+      actorNameCell.textContent = actorNames[i];
+
+      row.appendChild(heroCell);
+      row.appendChild(realNameCell);
+      row.appendChild(actorNameCell);
+
+      const correctHero = heroes.find(hero => hero.heroName === heroNames[i]);
+
+      if (
+        correctHero.realName === realNames[i] &&
+        correctHero.actorName === actorNames[i]
+      ) {
+        row.classList.add("matched");
+        correctMatches++;
+      }
+
+      tableBody.appendChild(row);
+    }
+
+    if (correctMatches === heroes.length) {
+      message.textContent = "Congratulations! All heroes matched correctly!";
+      message.classList.add("success");
+    } else if (firstVisit) {
+      message.textContent = `${correctMatches} out of ${heroes.length} heroes matched. A full match is only possible after at least one refresh!`;
+    } else {
+      message.textContent = `${correctMatches} out of ${heroes.length} heroes matched. Refresh to try again!`;
+    }
+
+    markAsVisited();
+  </script>
+</body>
+</html>
+
